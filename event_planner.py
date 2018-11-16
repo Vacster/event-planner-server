@@ -62,24 +62,33 @@ def get_event(name):
 @app.route('/event/<name>/<column>/<code>', methods=['PATCH'])
 def mark_column(name, column, code):
     conn = sqlite3.connect('events.db')
-    if check(conn, name, column, code) is True:
+    result = check(conn, name, column, code)
+
+    if result == 0:
         conn.close()
-        return Response(status=500)
+        return Response(status=404)
+    elif result == 1:
+        conn.close()
+        return Response(status=400)
     
-    accept(conn, name, column, code)
+    username = accept(conn, name, column, code)
     conn.close()
-    return Response(status=200)
+    return Response(username, status=200)
 
 def check(conn, name, column, code):
     try:
         result = conn.execute("SELECT " + column + " FROM " + 
         name + " WHERE code = :code", {"code": code})
-        return result.fetchone()[0] == 1
+        return 1 if (result.fetchone()[0] == 1) else 2
     except Exception as e:
-        print("Error in check: " + e)
-        return True
+        print("Error in check")
+        return 0
 
 def accept(conn, name, column, code):
     conn.execute("UPDATE " + name + " SET " + column +
     " = 1 WHERE code = :code", {"code": code})
     conn.commit()
+    cursor = conn.cursor()
+    names = [name[0] for name in cursor.execute("SELECT name FROM " + name + " WHERE code = :code", {"code": code})]
+    print(names)
+    return names
