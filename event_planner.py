@@ -73,14 +73,14 @@ def mark_column(name, column, code):
     
     username = accept(conn, name, column, code)
     conn.close()
-    return Response(username, status=200)
+    return jsonify(names=username), 200
 
 def check(conn, name, column, code):
     try:
         result = conn.execute("SELECT " + column + " FROM " + 
         name + " WHERE code = :code", {"code": code})
         return 1 if (result.fetchone()[0] == 1) else 2
-    except Exception as e:
+    except Exception:
         print("Error in check")
         return 0
 
